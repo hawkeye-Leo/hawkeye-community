@@ -1,0 +1,58 @@
+;;;
+;;; Hawkeye Community
+;;;
+
+[Version]
+Signature   = "$Windows NT$"
+Class       = System
+ClassGuid   = {4d36e97d-e325-11ce-bfc1-08002be10318}
+Provider    = %ManufacturerName%
+DriverVer   =
+CatalogFile = Hawkeye.cat
+PnpLockdown = 1
+
+[DestinationDirs]
+DefaultDestDir          = 12
+DriverFiles             = 12
+DriverUninstallFiles    = 12
+
+[DefaultInstall.NTamd64]
+OptionDesc = %ServiceDescription%
+CopyFiles  = DriverFiles
+
+[DefaultInstall.NTamd64.Services]
+AddService = %ServiceName%,,Driver.Service
+
+[DefaultUninstall.NTamd64]
+LegacyUninstall=1
+DelFiles = DriverUninstallFiles
+
+[DefaultUninstall.NTamd64.Services]
+DelService = %ServiceName%,0x200
+
+[Driver.Service]
+DisplayName      = %ServiceName%
+Description      = %ServiceDescription%
+ServiceBinary    = %12%\%DriverName%.sys
+ServiceType      = 1
+StartType        = 3
+ErrorControl     = 1
+
+[DriverFiles]
+%DriverName%.sys
+
+[DriverUninstallFiles]
+%DriverName%.sys
+
+[SourceDisksFiles]
+Hawkeye.sys = 1,,
+
+[SourceDisksNames]
+1 = %DiskId1%,,,
+
+[Strings]
+ManufacturerName   = "Hawkeye Community"
+ServiceDescription = "Hawkeye Community Driver"
+ServiceName        = "Hawkeye"
+DriverName         = "Hawkeye"
+DiskId1            = "Hawkeye Device Installation Disk"

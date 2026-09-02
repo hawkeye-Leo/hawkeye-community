@@ -1,0 +1,37 @@
+Hawkeye Community - Third-Party Notices
+========================================
+
+Hawkeye Community (Hawkeye.exe, Hawkeye.sys)
+Copyright (C) 2026 Hawkeye Community
+
+Licensed under GNU General Public License version 3 or later (GPL-3.0-or-later).
+Full license text: LICENSE (in this directory).
+
+Corresponding source code and build instructions:
+  https://github.com/hawkeye-Leo/hawkeye-community
+
+Website: https://hawkeye-leo.github.io/hawkeye/
+Support: hawkeye18485@gmail.com
+
+
+Qt 5.15
+-------
+This package includes Qt 5.15 shared libraries (Qt5*.dll), dynamically linked.
+
+Copyright (C) The Qt Company Ltd. and contributors.
+Licensed under the GNU Lesser General Public License, version 3 (LGPL-3.0).
+
+Qt is linked as a separate shared library. You may replace the Qt DLLs in this
+directory with another build of Qt 5.15 for Windows x64, per LGPL-3.0.
+
+Qt source code (open-source edition, match the 5.15 line used to build):
+  https://www.qt.io/download-open-source
+
+Full LGPL-3.0 text: LGPL-3.0.txt (in this directory).
+
+
+bddisasm
+--------
+Bitdefender disassembler library, used in Hawkeye Community source code.
+Licensed under the Apache License, Version 2.0.
+Vendored in the source repository at third_party/bddisasm.

@@ -1,0 +1,31 @@
+
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.37327.17
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HawkHotTargets", "HawkHotTargets.vcxproj", "{7F3A9C21-4B18-4E6D-9F02-1C8A5D7E3B90}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HawkHotTargetsTest", "HawkHotTargetsTest.vcxproj", "{2E8D4A11-9C70-4B3F-A156-6D4F8E2C1B77}"
+	ProjectSection(ProjectDependencies) = postProject
+		{7F3A9C21-4B18-4E6D-9F02-1C8A5D7E3B90} = {7F3A9C21-4B18-4E6D-9F02-1C8A5D7E3B90}
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{7F3A9C21-4B18-4E6D-9F02-1C8A5D7E3B90}.Debug|x64.ActiveCfg = Debug|x64
+		{7F3A9C21-4B18-4E6D-9F02-1C8A5D7E3B90}.Debug|x64.Build.0 = Debug|x64
+		{7F3A9C21-4B18-4E6D-9F02-1C8A5D7E3B90}.Release|x64.ActiveCfg = Release|x64
+		{7F3A9C21-4B18-4E6D-9F02-1C8A5D7E3B90}.Release|x64.Build.0 = Release|x64
+		{2E8D4A11-9C70-4B3F-A156-6D4F8E2C1B77}.Debug|x64.ActiveCfg = Debug|x64
+		{2E8D4A11-9C70-4B3F-A156-6D4F8E2C1B77}.Debug|x64.Build.0 = Debug|x64
+		{2E8D4A11-9C70-4B3F-A156-6D4F8E2C1B77}.Release|x64.ActiveCfg = Release|x64
+		{2E8D4A11-9C70-4B3F-A156-6D4F8E2C1B77}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

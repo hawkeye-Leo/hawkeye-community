@@ -1,0 +1,3 @@
+LIBRARY HawkHotTargets
+EXPORTS
+	HawkHotTargetsQuery

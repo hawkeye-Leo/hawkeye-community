@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/Hawkeye">
+        <file>AppIcon.png</file>
+    </qresource>
+</RCC>

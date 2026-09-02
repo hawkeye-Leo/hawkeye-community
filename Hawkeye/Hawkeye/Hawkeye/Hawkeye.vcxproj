@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{75CD539E-248F-4E90-9BE2-6E4DCD576377}</ProjectGuid>
+    <Keyword>QtVS_v304</Keyword>
+    <WindowsTargetPlatformVersion Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">10.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">10.0</WindowsTargetPlatformVersion>
+    <QtMsBuild Condition="'$(QtMsBuild)'=='' OR !Exists('$(QtMsBuild)\qt.targets')">$(MSBuildProjectDirectory)\QtMsBuild</QtMsBuild>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v142</PlatformToolset>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v142</PlatformToolset>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Condition="Exists('$(QtMsBuild)\qt_defaults.props')">
+    <Import Project="$(QtMsBuild)\qt_defaults.props" />
+  </ImportGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'" Label="QtSettings">
+    <QtInstall>5.15.2_msvc2019_64</QtInstall>
+    <QtModules>core;network;gui;widgets</QtModules>
+    <QtBuildConfig>debug</QtBuildConfig>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'" Label="QtSettings">
+    <QtInstall>5.15.2_msvc2019_64</QtInstall>
+    <QtModules>core;network;gui;widgets</QtModules>
+    <QtBuildConfig>release</QtBuildConfig>
+  </PropertyGroup>
+  <Target Name="QtMsBuildNotFound" BeforeTargets="CustomBuild;ClCompile" Condition="!Exists('$(QtMsBuild)\qt.targets') or !Exists('$(QtMsBuild)\qt.props')">
+    <Message Importance="High" Text="QtMsBuild: could not locate qt.targets, qt.props; project may not build correctly." />
+  </Target>
+  <ImportGroup Label="ExtensionSettings" />
+  <ImportGroup Label="Shared" />
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(QtMsBuild)\Qt.props" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(QtMsBuild)\Qt.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Link>
+      <UACExecutionLevel>RequireAdministrator</UACExecutionLevel>
+      <AdditionalDependencies>dcomp.lib;d3d11.lib;dxgi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Link>
+      <UACExecutionLevel>RequireAdministrator</UACExecutionLevel>
+      <AdditionalDependencies>dcomp.lib;d3d11.lib;dxgi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'" Label="Configuration">
+    <ClCompile>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)ui;$(ProjectDir)memory;$(ProjectDir)disasm;$(ProjectDir)symbols;$(ProjectDir)process;$(ProjectDir)hooks;$(ProjectDir)cert;$(ProjectDir)etw;$(ProjectDir)sim;$(ProjectDir)ioctl;$(ProjectDir)compat;$(ProjectDir)..\..\..;$(ProjectDir)..\..\..\third_party;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>HAWKEYE_COMMUNITY;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'" Label="Configuration">
+    <ClCompile>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <ConformanceMode>true</ConformanceMode>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>false</IntrinsicFunctions>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)ui;$(ProjectDir)memory;$(ProjectDir)disasm;$(ProjectDir)symbols;$(ProjectDir)process;$(ProjectDir)hooks;$(ProjectDir)cert;$(ProjectDir)etw;$(ProjectDir)sim;$(ProjectDir)ioctl;$(ProjectDir)compat;$(ProjectDir)..\..\..;$(ProjectDir)..\..\..\third_party;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>HAWKEYE_COMMUNITY;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="Hawkeye.cpp" />
+    <QtMoc Include="Hawkeye.h" />
+    <QtUic Include="Hawkeye.ui" />
+    <QtRcc Include="Hawkeye.qrc" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="ui\HawkeyeTitleBar.cpp" />
+    <ClCompile Include="ui\IntroSplash.cpp" />
+    <ClCompile Include="ui\CmdLineScanGlow.cpp" />
+    <ClCompile Include="ui\ConsoleBorderGlow.cpp" />
+    <ClCompile Include="ui\driversetupdialog.cpp" />
+    <QtMoc Include="ui\HawkeyeTitleBar.h" />
+    <QtMoc Include="ui\IntroSplash.h" />
+    <QtMoc Include="ui\CmdLineScanGlow.h" />
+    <QtMoc Include="ui\ConsoleBorderGlow.h" />
+    <QtMoc Include="ui\driversetupdialog.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="memory\memory.cpp" />
+    <ClCompile Include="memory\qhex.cpp" />
+    <ClCompile Include="disasm\memory_view_build.cpp" />
+    <QtMoc Include="memory\memory.h" />
+    <QtMoc Include="memory\qhex.h" />
+    <QtUic Include="memory\Memory.ui" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="process\process.cpp" />
+    <ClCompile Include="process\list_pt.cpp" />
+    <ClInclude Include="process\process.h" />
+    <ClInclude Include="process\list_pt.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="symbols\symmanager.cpp" />
+    <ClCompile Include="symbols\probe.cpp" />
+    <ClInclude Include="symbols\symmanager.h" />
+    <ClInclude Include="symbols\probe.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="hooks\hook.cpp" />
+    <ClInclude Include="hooks\hook.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="cert\CertVerifier.cpp" />
+    <ClInclude Include="cert\CertVerifier.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="etw\etw.cpp" />
+    <ClInclude Include="etw\etw.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="sim\inject_sim.cpp" />
+    <ClCompile Include="sim\inline_hook_sim.cpp" />
+    <ClInclude Include="sim\inject_sim.h" />
+    <ClInclude Include="sim\inline_hook_sim.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="ioctl\Driver.cpp" />
+    <ClInclude Include="ioctl\Driver.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="compat\CompatReport.cpp" />
+    <ClCompile Include="compat\PathConvert.cpp" />
+    <ClInclude Include="compat\CompatReport.h" />
+    <ClInclude Include="compat\PathConvert.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\third_party\bddisasm\bddisasm.c" />
+    <ClCompile Include="..\..\..\third_party\bddisasm\bdshemu.c" />
+    <ClCompile Include="..\..\..\third_party\bddisasm\crt.c" />
+    <ClCompile Include="..\..\..\third_party\bddisasm\disasmtool.c" />
+    <ClInclude Include="..\..\..\third_party\bddisasm\bddisasm.h" />
+    <ClInclude Include="..\..\..\third_party\bddisasm\bdshemu.h" />
+    <ClInclude Include="..\..\..\third_party\bddisasm\constants.h" />
+    <ClInclude Include="..\..\..\third_party\bddisasm\cpuidflags.h" />
+    <ClInclude Include="..\..\..\third_party\bddisasm\disasmstatus.h" />
+    <ClInclude Include="..\..\..\third_party\bddisasm\disasmtypes.h" />
+    <ClInclude Include="..\..\..\third_party\bddisasm\instructions.h" />
+    <ClInclude Include="..\..\..\third_party\bddisasm\mnemonics.h" />
+    <ClInclude Include="..\..\..\third_party\bddisasm\nd_crt.h" />
+    <ClInclude Include="..\..\..\third_party\bddisasm\prefixes.h" />
+    <ClInclude Include="..\..\..\third_party\bddisasm\registers.h" />
+    <ClInclude Include="..\..\..\third_party\bddisasm\tabledefs.h" />
+    <ClInclude Include="..\..\..\third_party\bddisasm\table_evex.h" />
+    <ClInclude Include="..\..\..\third_party\bddisasm\table_root.h" />
+    <ClInclude Include="..\..\..\third_party\bddisasm\table_vex.h" />
+    <ClInclude Include="..\..\..\third_party\bddisasm\table_xop.h" />
+    <ClInclude Include="..\..\..\third_party\bddisasm\version.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="disasm\memory_view_build.h" />
+    <ClInclude Include="HawkeyeVersion.h" />
+    <ClInclude Include="HawkeyeStyle.h" />
+    <ClInclude Include="resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Hawkeye.rc" />
+    <Image Include="AppIcon.ico" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">
+    <Import Project="$(QtMsBuild)\qt.targets" />
+  </ImportGroup>
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+  <ItemDefinitionGroup>
+    <PostBuildEvent>
+      <Command>xcopy /y /d "C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\dbghelp.dll" "$(OutDir)"
+xcopy /y /d "C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\symsrv.dll" "$(OutDir)"
+if not exist "$(OutDir)sim" mkdir "$(OutDir)sim"
+xcopy /y /d "$(ProjectDir)..\..\..\samples\HawkUnsignedStub\bin\Release\HawkUnsignedStub.dll" "$(OutDir)sim\"
+if /I not "$(Configuration)"=="Release" goto skip_hawkeye_sign
+if /I not "$(Platform)"=="x64" goto skip_hawkeye_sign
+setlocal EnableDelayedExpansion
+set "SIGNTOOL="
+for /d %%D in ("$(WindowsSdkDir)bin\10.*") do if exist "%%~D\x64\signtool.exe" set "SIGNTOOL=%%~D\x64\signtool.exe"
+if not defined SIGNTOOL (
+  echo signtool.exe not found under "$(WindowsSdkDir)bin"
+  exit /b 1
+)
+"!SIGNTOOL!" sign /v /s My /n "Hawkeye Test Certificate" /fd SHA256 /ph "$(TargetPath)"
+if errorlevel 1 exit /b 1
+if not exist "$(ProjectDir)..\..\..\bin" mkdir "$(ProjectDir)..\..\..\bin"
+copy /y "$(TargetPath)" "$(ProjectDir)..\..\..\bin\Hawkeye.exe"
+if errorlevel 1 exit /b 1
+endlocal
+:skip_hawkeye_sign</Command>
+      <Message>Copy dbghelp/symsrv/stub; Release|x64 test-signs Hawkeye.exe and copies it to repo bin</Message>
+    </PostBuildEvent>
+    <Link>
+      <AdditionalLibraryDirectories Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.\Hawkeye;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+    <ClCompile>
+      <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Disabled</Optimization>
+    </ClCompile>
+    <ClCompile>
+      <OmitFramePointers Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</OmitFramePointers>
+    </ClCompile>
+  </ItemDefinitionGroup>
+</Project>
