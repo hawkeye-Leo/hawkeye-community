@@ -1,15 +1,16 @@
 # Hawkeye Community
 
+**Official open-source edition of [Hawkeye Lab](https://hawkeye-leo.github.io/hawkeye/lab/).**  
+Windows **kernel security research console** — live memory analysis, ETW sampling, symbols (`!probe`), and driver-backed inspection. **This repository is the source code and releases;** [hawkeye-Leo/hawkeye](https://github.com/hawkeye-Leo/hawkeye) is the website only.
+
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 ![Platform: Windows 10/11 x64](https://img.shields.io/badge/Platform-Windows%2010%2F11%20x64-0078D4)
 
-Windows research console — live symbols, ETW, memory, and driver-backed inspection.
+[Download](https://github.com/hawkeye-Leo/hawkeye-community/releases/latest) · [Source](https://github.com/hawkeye-Leo/hawkeye-community) · [Official website](https://hawkeye-leo.github.io/hawkeye/) · [Hawkeye Lab](https://hawkeye-leo.github.io/hawkeye/lab/) · [Community vs Lab](#community-and-lab)
 
-[Download](https://github.com/hawkeye-Leo/hawkeye-community/releases/latest) · [Source](https://github.com/hawkeye-Leo/hawkeye-community) · [Website](https://hawkeye-leo.github.io/hawkeye/) · [Lab](https://hawkeye-leo.github.io/hawkeye/lab/) · [Community and Lab](#community-and-lab)
+Hawkeye Community is for **research and learning** on systems you administer: run it on a live Windows machine and explore how kernel and process behavior look in practice.
 
-Hawkeye is a research console. **Community** is for research and learning: you run it on a live system and get closer to how it works.
-
-Hawkeye is also research turned into a productivity tool. Built on that same foundation, **Lab** adds automated high-risk detection and analysis reports. See [Community and Lab](#community-and-lab) below.
+**Hawkeye Lab** is the subscription edition on the same foundation — automated high-risk detection, `!analyze`, and scored reports. See [Community and Lab](#community-and-lab) below.
 
 ## Authorized use only
 
