@@ -2,14 +2,15 @@
 
 // Single source of truth for Hawkeye Community release metadata.
 // Bump here before shipping; Hawkeye.rc and QApplication::applicationVersion() follow this file.
+// PATCH: +1 small change, +10 major change (BUILD usually stays 0).
 
 #define HAWKEYE_VERSION_MAJOR 1
 #define HAWKEYE_VERSION_MINOR 0
-#define HAWKEYE_VERSION_PATCH 0
+#define HAWKEYE_VERSION_PATCH 1
 #define HAWKEYE_VERSION_BUILD 0
 
-#define HAWKEYE_VERSION_STRING      "1.0.0"
-#define HAWKEYE_VERSION_STRING_FULL "1.0.0.0"
+#define HAWKEYE_VERSION_STRING      "1.0.1"
+#define HAWKEYE_VERSION_STRING_FULL "1.0.1.0"
 
 #define HAWKEYE_PRODUCT_NAME         "Hawkeye Community"
 #define HAWKEYE_PRODUCT_TAGLINE      "Open-source Windows lab console for authorized security research"

@@ -81,7 +81,7 @@
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)ui;$(ProjectDir)memory;$(ProjectDir)disasm;$(ProjectDir)symbols;$(ProjectDir)process;$(ProjectDir)hooks;$(ProjectDir)cert;$(ProjectDir)etw;$(ProjectDir)sim;$(ProjectDir)ioctl;$(ProjectDir)compat;$(ProjectDir)..\..\..;$(ProjectDir)..\..\..\third_party;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)ui;$(ProjectDir)memory;$(ProjectDir)disasm;$(ProjectDir)symbols;$(ProjectDir)process;$(ProjectDir)hooks;$(ProjectDir)cert;$(ProjectDir)etw;$(ProjectDir)sim;$(ProjectDir)ioctl;$(ProjectDir)compat;$(ProjectDir)capture;$(ProjectDir)..\..\..;$(ProjectDir)..\..\..\third_party;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>HAWKEYE_COMMUNITY;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
@@ -97,7 +97,7 @@
       <ConformanceMode>true</ConformanceMode>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>false</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)ui;$(ProjectDir)memory;$(ProjectDir)disasm;$(ProjectDir)symbols;$(ProjectDir)process;$(ProjectDir)hooks;$(ProjectDir)cert;$(ProjectDir)etw;$(ProjectDir)sim;$(ProjectDir)ioctl;$(ProjectDir)compat;$(ProjectDir)..\..\..;$(ProjectDir)..\..\..\third_party;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)ui;$(ProjectDir)memory;$(ProjectDir)disasm;$(ProjectDir)symbols;$(ProjectDir)process;$(ProjectDir)hooks;$(ProjectDir)cert;$(ProjectDir)etw;$(ProjectDir)sim;$(ProjectDir)ioctl;$(ProjectDir)compat;$(ProjectDir)capture;$(ProjectDir)..\..\..;$(ProjectDir)..\..\..\third_party;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>HAWKEYE_COMMUNITY;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
@@ -167,6 +167,10 @@
   <ItemGroup>
     <ClCompile Include="ioctl\Driver.cpp" />
     <ClInclude Include="ioctl\Driver.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="capture\dwm_hidden_windows.cpp" />
+    <ClInclude Include="capture\dwm_hidden_windows.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="compat\CompatReport.cpp" />

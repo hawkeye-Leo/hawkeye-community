@@ -78,7 +78,7 @@ That is system-wide, keeps low-count hits, and skips symbol resolve so it return
 `!process` · `!modules` · `!threads`
 
 **Integrity**  
-`!check_cert` · `!check_hwnd` · `!inline_hook` · `!iguard_scan`
+`!check_cert` · `!check_hwnd` · `!hidden_windows` · `!hidden_windows_sim` · `!inline_hook` · `!iguard_scan`
 
 **Memory**  
 `!pte` · `!pfn` · `!kernel_region` · `!dump` — mmcopy and map_io only

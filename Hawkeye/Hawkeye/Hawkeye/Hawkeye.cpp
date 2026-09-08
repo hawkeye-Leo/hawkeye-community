@@ -16,6 +16,7 @@
 #include "PathConvert.h"
 #include "inline_hook_sim.h"
 #include "list_pt.h"
+#include "dwm_hidden_windows.h"
 #include <QAbstractItemView>
 #include <QCompleter>
 #include <QLineEdit>
@@ -211,6 +212,8 @@ QVector<HawkeyeCommandEntry> hawkeyeCommandCatalog()
         { QStringLiteral("!inline_hook"), QStringLiteral("Scan user process modules for inline hooks (run !inline_hook for usage)"), QStringLiteral("!inline_hook -pid:<pid>") },
         { QStringLiteral("!modules"), QStringLiteral("Enumerate kernel or user-mode modules (run !modules for usage)"), QStringLiteral("!modules -pid:<pid>") },
         { QStringLiteral("!check_hwnd"), QStringLiteral("Check whether a window handle is valid (run !check_hwnd for usage)"), QStringLiteral("!check_hwnd -hwnd:<0x...>") },
+        { QStringLiteral("!hidden_windows"), QStringLiteral("Detect windows hidden via SetWindowDisplayAffinity (run !hidden_windows for usage)"), QStringLiteral("!hidden_windows [-init]") },
+        { QStringLiteral("!hidden_windows_sim"), QStringLiteral("Hide Hawkeye's main window with SetWindowDisplayAffinity to stage a test case for !hidden_windows (run !hidden_windows_sim for usage)"), QStringLiteral("!hidden_windows_sim -enable:<0|1>") },
         { QStringLiteral("!kernel_region"), QStringLiteral("Identify kernel address range type (run !kernel_region for usage)"), QStringLiteral("!kernel_region -va:<0x...> | !kernel_region -list") },
         { QStringLiteral("!inject_sim"), QStringLiteral("Inject unsigned stub DLL via CreateRemoteThread+LoadLibraryW (run !inject_sim for usage)"), QStringLiteral("!inject_sim -pid:<pid> | -stop") },
         { QStringLiteral("!inline_hook_sim"), QStringLiteral("Patch HawkUnsignedStub .text in-memory to stage inline_hook test (run !inline_hook_sim for usage)"), QStringLiteral("!inline_hook_sim -pid:<pid> | -stop") },
@@ -4351,6 +4354,210 @@ void Hawkeye::handleCommandLine(const QString& command)
             }
         }
     }
+    else if (cmd == "!hidden_windows")
+    {
+        bool hasInit = false;
+        bool hasUnknown = false;
+        for (int i = 1; i < parts.size(); ++i) {
+            if (parts[i].compare("-init", Qt::CaseInsensitive) == 0) {
+                hasInit = true;
+            } else {
+                hasUnknown = true;
+            }
+        }
+
+        if (hasUnknown) {
+            setOutputText("Usage: !hidden_windows [-init]");
+            setOutputText("  !hidden_windows -init  initialize (required before detection)");
+            setOutputText("  !hidden_windows        detect hidden windows");
+        }
+        else if (hasInit)
+        {
+            HWND hwnd = getWindowHandle();
+            if (!hwnd) {
+                setOutputText("Error: main window handle is not available.");
+            } else if (m_hiddenWindowsInitInProgress) {
+                setOutputText("Hidden windows initialization is already running, please wait...");
+            } else if (rejectIfProbeAttachBusy(QStringLiteral("!hidden_windows -init"))) {
+                // blocked
+            } else if (rejectIfProbeQueryBusy(QStringLiteral("!hidden_windows -init"))) {
+                // blocked
+            } else if (GetHiddenWindowOffsetState() == HiddenWindowOffsetState::Ready) {
+                const HiddenWindowLogFn logFn = [this](const std::wstring& line) {
+                    setOutputText(QString::fromStdWString(line));
+                };
+                const HiddenWindowOffsetInitResult initResult =
+                    InitHiddenWindowOffsets(hwnd, &m_symbolManager, logFn);
+                if (initResult.state == HiddenWindowOffsetState::Ready && !initResult.ranCalibration) {
+                    setOutputText("Already initialized.");
+                }
+            } else if (!tryBeginSymOperation()) {
+                setOutputText("Symbol operation already in progress, please wait...");
+            } else {
+                m_hiddenWindowsInitInProgress = true;
+                setOutputText("Hidden windows initialization started (background, downloading PDBs if needed)...");
+
+                auto ensureLogs = std::make_shared<std::vector<std::wstring>>();
+                const HiddenWindowLogFn collectLogFn = [ensureLogs](const std::wstring& line) {
+                    ensureLogs->push_back(line);
+                };
+                auto handoffDone = std::make_shared<std::atomic<bool>>(false);
+
+                const HiddenWindowAffinityFn affinityFn = [this](HWND wnd, BOOL enable) -> bool {
+                    bool result = false;
+                    QMetaObject::invokeMethod(this, [wnd, enable, &result]() {
+                        result = SetWindowAntiCapture(wnd, enable);
+                    }, Qt::BlockingQueuedConnection);
+                    return result;
+                };
+
+                QThread* initThread = QThread::create([this, hwnd, collectLogFn, ensureLogs, affinityFn, handoffDone]() {
+                    const HiddenWindowOffsetInitResult initResult =
+                        InitHiddenWindowOffsets(hwnd, &m_symbolManager, collectLogFn, affinityFn);
+
+                    QMetaObject::invokeMethod(this, [this, ensureLogs, initResult]() {
+                        for (const std::wstring& line : *ensureLogs) {
+                            setOutputText(QString::fromStdWString(line));
+                        }
+
+                        if (initResult.state == HiddenWindowOffsetState::Ready) {
+                            if (!initResult.ranCalibration) {
+                                setOutputText("Already initialized.");
+                            } else {
+                                setOutputText("Initialization succeeded.");
+                                setOutputText(QString("  vftable VA: 0x%1")
+                                    .arg(initResult.vtableAddress, 0, 16));
+                                setOutputText(QString("  sample object: 0x%1")
+                                    .arg(initResult.sampleObjectAddress, 0, 16));
+                                setOutputText(QString("  offsets: flags=+0x%1 kind=+0x%2 hwnd=+0x%3 pid=+0x%4")
+                                    .arg(initResult.flagsOffset, 0, 16)
+                                    .arg(initResult.kindOffset, 0, 16)
+                                    .arg(initResult.hwndOffset, 0, 16)
+                                    .arg(initResult.pidOffset, 0, 16));
+                            }
+                        } else if (initResult.state == HiddenWindowOffsetState::Failed) {
+                            const QString detail = initResult.message.empty()
+                                ? QStringLiteral("Initialization failed.")
+                                : QString::fromStdWString(initResult.message);
+                            if (!initResult.ranCalibration) {
+                                setOutputText(QString("Error: initialization failed. Detection is skipped. %1").arg(detail));
+                            } else {
+                                setOutputText(QString("Error: %1").arg(detail));
+                            }
+                        } else {
+                            setOutputText("Error: initialization failed.");
+                        }
+                    }, Qt::QueuedConnection);
+
+                    handoffDone->store(true);
+                });
+                connect(initThread, &QThread::finished, this, [this, handoffDone]() {
+                    m_hiddenWindowsInitInProgress = false;
+                    if (!handoffDone->load()) {
+                        setOutputText("Hidden windows initialization failed before results were ready.");
+                    }
+                    endSymOperation();
+                });
+                connect(initThread, &QThread::finished, initThread, &QObject::deleteLater);
+                initThread->start();
+            }
+        }
+        else
+        {
+            const HiddenWindowOffsetState state = GetHiddenWindowOffsetState();
+            if (state == HiddenWindowOffsetState::NotInitialized) {
+                setOutputText("Usage: !hidden_windows [-init]");
+                setOutputText("  !hidden_windows -init  initialize (required before detection)");
+                setOutputText("  !hidden_windows        detect hidden windows");
+            } else if (state == HiddenWindowOffsetState::Failed) {
+                setOutputText("Error: initialization failed. Detection is skipped.");
+            } else {
+                std::vector<WndInfo> wnd;
+                DetectHiddenWindows(wnd, getWindowHandle());
+                if (wnd.empty())
+                {
+                    setOutputText("No hidden windows detected.");
+                }
+                for (const WndInfo& wi : wnd)
+                {
+                    const ULONG hwndValue = wi.hwnd;
+                    CHECK_VALID_HWND inout = { 0 };
+                    inout.hwnd = hwndValue;
+                    CheckValidHwnd(&inout);
+                    const HWND hwnd = reinterpret_cast<HWND>(static_cast<ULONG_PTR>(hwndValue));
+                    QString visible = IsWindowVisible(hwnd) ? "Yes" : "No";
+                    QString iconic = IsIconic(hwnd) ? "Yes" : "No";
+                    DWORD exStyle = GetWindowLong(hwnd, GWL_EXSTYLE);
+                    QString layered = (exStyle & WS_EX_LAYERED) ? "Yes" : "No";
+                    QString processPath = QString::fromStdWString(Process::getPath(wi.pid));
+                    QString size = "N/A";
+                    RECT rect;
+                    if (GetWindowRect(hwnd, &rect))
+                    {
+                        size = QString("%1 x %2").arg(rect.right - rect.left).arg(rect.bottom - rect.top);
+                    }
+                    const QString falsePositive = (inout.isValid == 0 && inout.errCode == 1)
+                        ? QStringLiteral("This may be a false positive.")
+                        : QString();
+                    setOutputText(QString("Pid: %1  Hwnd: %2  Visible: %3  Iconic: %4  Layered: %5  Size: %6  %7")
+                        .arg(wi.pid, -6)
+                        .arg(QString::number(wi.hwnd, 16).toUpper(), -8)
+                        .arg(visible, -3)
+                        .arg(iconic, -3)
+                        .arg(layered, -3)
+                        .arg(size, -12)
+                        .arg(falsePositive));
+                    setOutputText(QString("  Path: %1").arg(processPath));
+                }
+            }
+        }
+    }
+    else if (cmd == "!hidden_windows_sim")
+    {
+        bool hasEnableFlag = false;
+        QString enableRawValue;
+
+        for (int i = 1; i < parts.size(); ++i)
+        {
+            if (parts[i].startsWith("-enable:", Qt::CaseInsensitive))
+            {
+                hasEnableFlag = true;
+                enableRawValue = parts[i].mid(8);
+                break;
+            }
+        }
+
+        if (!hasEnableFlag)
+        {
+            setOutputText("Usage: !hidden_windows_sim -enable:<0|1>");
+            setOutputText("  -enable:0  disable anti-capture (show window in capture)");
+            setOutputText("  -enable:1  enable anti-capture (hide window from capture)");
+            setOutputText("  e.g. !hidden_windows_sim -enable:1");
+        }
+        else if (enableRawValue != "0" && enableRawValue != "1")
+        {
+            setOutputText(QString("Error: -enable value '%1' is not valid. Only 0 or 1 is allowed.").arg(enableRawValue));
+        }
+        else
+        {
+            const bool enableAntiCapture = (enableRawValue == "1");
+            HWND hwnd = getWindowHandle();
+            if (!hwnd)
+            {
+                setOutputText("Error: main window handle is not available.");
+            }
+            else if (!SetWindowAntiCapture(hwnd, enableAntiCapture ? TRUE : FALSE))
+            {
+                setOutputText("Error: SetWindowAntiCapture failed.");
+            }
+            else
+            {
+                setOutputText(enableAntiCapture
+                    ? "Window anti-capture enabled (hidden from capture)."
+                    : "Window anti-capture disabled (visible in capture).");
+            }
+        }
+    }
     else if (cmd == "!kernel_region")
     {
         quint64 va = 0;
@@ -5320,6 +5527,8 @@ void Hawkeye::handleCommandLine(const QString& command)
 
         setOutputTextHeading("[Windows]");
         setOutputText("!check_hwnd - Check whether a window handle is valid (run !check_hwnd for usage)");
+        setOutputText("!hidden_windows - Detect windows hidden via SetWindowDisplayAffinity (run !hidden_windows for usage)");
+        setOutputText("!hidden_windows_sim - Hide Hawkeye's main window to stage a test case for !hidden_windows (run !hidden_windows_sim for usage)");
         setOutputText("");
 
         setOutputTextHeading("[Memory]");
