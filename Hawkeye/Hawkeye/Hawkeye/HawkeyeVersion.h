@@ -6,11 +6,11 @@
 
 #define HAWKEYE_VERSION_MAJOR 1
 #define HAWKEYE_VERSION_MINOR 0
-#define HAWKEYE_VERSION_PATCH 1
+#define HAWKEYE_VERSION_PATCH 2
 #define HAWKEYE_VERSION_BUILD 0
 
-#define HAWKEYE_VERSION_STRING      "1.0.1"
-#define HAWKEYE_VERSION_STRING_FULL "1.0.1.0"
+#define HAWKEYE_VERSION_STRING      "1.0.2"
+#define HAWKEYE_VERSION_STRING_FULL "1.0.2.0"
 
 #define HAWKEYE_PRODUCT_NAME         "Hawkeye Community"
 #define HAWKEYE_PRODUCT_TAGLINE      "Open-source Windows lab console for authorized security research"

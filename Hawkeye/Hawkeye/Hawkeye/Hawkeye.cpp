@@ -17,6 +17,7 @@
 #include "inline_hook_sim.h"
 #include "list_pt.h"
 #include "dwm_hidden_windows.h"
+#include "screensnap.h"
 #include <QAbstractItemView>
 #include <QCompleter>
 #include <QLineEdit>
@@ -214,6 +215,7 @@ QVector<HawkeyeCommandEntry> hawkeyeCommandCatalog()
         { QStringLiteral("!check_hwnd"), QStringLiteral("Check whether a window handle is valid (run !check_hwnd for usage)"), QStringLiteral("!check_hwnd -hwnd:<0x...>") },
         { QStringLiteral("!hidden_windows"), QStringLiteral("Detect windows hidden via SetWindowDisplayAffinity (run !hidden_windows for usage)"), QStringLiteral("!hidden_windows [-init]") },
         { QStringLiteral("!hidden_windows_sim"), QStringLiteral("Hide Hawkeye's main window with SetWindowDisplayAffinity to stage a test case for !hidden_windows (run !hidden_windows_sim for usage)"), QStringLiteral("!hidden_windows_sim -enable:<0|1>") },
+        { QStringLiteral("!screensnap"), QStringLiteral("Capture the primary display via BitBlt after temporarily patching dwmcore RenderForCapture (run !screensnap for usage)"), QStringLiteral("!screensnap") },
         { QStringLiteral("!kernel_region"), QStringLiteral("Identify kernel address range type (run !kernel_region for usage)"), QStringLiteral("!kernel_region -va:<0x...> | !kernel_region -list") },
         { QStringLiteral("!inject_sim"), QStringLiteral("Inject unsigned stub DLL via CreateRemoteThread+LoadLibraryW (run !inject_sim for usage)"), QStringLiteral("!inject_sim -pid:<pid> | -stop") },
         { QStringLiteral("!inline_hook_sim"), QStringLiteral("Patch HawkUnsignedStub .text in-memory to stage inline_hook test (run !inline_hook_sim for usage)"), QStringLiteral("!inline_hook_sim -pid:<pid> | -stop") },
@@ -4512,6 +4514,60 @@ void Hawkeye::handleCommandLine(const QString& command)
             }
         }
     }
+    else if (cmd == "!screensnap")
+    {
+        if (m_screensnapInProgress) {
+            setOutputText("Screensnap is already running, please wait...");
+        } else if (rejectIfProbeAttachBusy(QStringLiteral("!screensnap"))) {
+            // blocked
+        } else if (rejectIfProbeQueryBusy(QStringLiteral("!screensnap"))) {
+            // blocked
+        } else if (!tryBeginSymOperation()) {
+            setOutputText("Symbol operation already in progress, please wait...");
+        } else {
+            m_screensnapInProgress = true;
+            setOutputText("Screensnap started (background, downloading PDBs if needed)...");
+
+            auto ensureLogs = std::make_shared<std::vector<std::wstring>>();
+            const ScreensnapLogFn collectLogFn = [ensureLogs](const std::wstring& line) {
+                ensureLogs->push_back(line);
+            };
+            auto handoffDone = std::make_shared<std::atomic<bool>>(false);
+
+            QThread* snapThread = QThread::create([this, collectLogFn, ensureLogs, handoffDone]() {
+                const ScreensnapResult captureResult = runScreensnapCapture(&m_symbolManager, collectLogFn);
+
+                QMetaObject::invokeMethod(this, [this, ensureLogs, captureResult]() {
+                    for (const std::wstring& line : *ensureLogs) {
+                        setOutputText(QString::fromStdWString(line));
+                    }
+
+                    if (captureResult.ok) {
+                        setOutputText(QStringLiteral("Super-capture screenshot saved: %1")
+                            .arg(QString::fromStdWString(captureResult.savedPath)));
+                    } else if (!captureResult.error.empty()) {
+                        setOutputText(QStringLiteral("Error: !screensnap failed (%1).")
+                            .arg(QString::fromStdWString(captureResult.error)));
+                        if (!captureResult.savedPath.empty()) {
+                            setOutputText(QStringLiteral("Partial output: %1")
+                                .arg(QString::fromStdWString(captureResult.savedPath)));
+                        }
+                    }
+                }, Qt::QueuedConnection);
+
+                handoffDone->store(true);
+            });
+            connect(snapThread, &QThread::finished, this, [this, handoffDone]() {
+                m_screensnapInProgress = false;
+                if (!handoffDone->load()) {
+                    setOutputText("Screensnap failed before results were ready.");
+                }
+                endSymOperation();
+            });
+            connect(snapThread, &QThread::finished, snapThread, &QObject::deleteLater);
+            snapThread->start();
+        }
+    }
     else if (cmd == "!hidden_windows_sim")
     {
         bool hasEnableFlag = false;
@@ -5529,6 +5585,7 @@ void Hawkeye::handleCommandLine(const QString& command)
         setOutputText("!check_hwnd - Check whether a window handle is valid (run !check_hwnd for usage)");
         setOutputText("!hidden_windows - Detect windows hidden via SetWindowDisplayAffinity (run !hidden_windows for usage)");
         setOutputText("!hidden_windows_sim - Hide Hawkeye's main window to stage a test case for !hidden_windows (run !hidden_windows_sim for usage)");
+        setOutputText("!screensnap - Capture the primary display via BitBlt after temporarily patching dwmcore RenderForCapture");
         setOutputText("");
 
         setOutputTextHeading("[Memory]");

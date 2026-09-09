@@ -170,7 +170,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="capture\dwm_hidden_windows.cpp" />
+    <ClCompile Include="capture\screensnap.cpp" />
     <ClInclude Include="capture\dwm_hidden_windows.h" />
+    <ClInclude Include="capture\screensnap.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="compat\CompatReport.cpp" />

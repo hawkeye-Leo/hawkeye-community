@@ -116,6 +116,7 @@ private:
     bool m_iguardScanning = false;
     bool m_inlineHookScanning = false;
     bool m_hiddenWindowsInitInProgress = false;
+    bool m_screensnapInProgress = false;
     bool m_testSigningRunning = false;
     std::atomic<bool> m_certScanRunning{ false };
     std::atomic<bool> m_certScanStopRequested{ false };
