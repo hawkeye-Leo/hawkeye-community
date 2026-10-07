@@ -5,6 +5,7 @@
 #include "module.h"
 #include "hwnd.h"
 #include "hook.h"
+#include "draw_test_gdi.h"
 
 PDEVICE_OBJECT g_HawkDevice = NULL;
 DWORD64 g_HawkImageBase = 0;
@@ -232,6 +233,38 @@ HawkDispatchDeviceControl(
 			break;
 		}
 		HawkIoctlOpenProcessHandle(Irp);
+		return STATUS_SUCCESS;
+	}
+
+	case IOCTL_USERMODE_CALLBACK_INIT:
+	{
+		if (inputLength != sizeof(USERMODE_CALLBACK_INIT) || outputLength != sizeof(USERMODE_CALLBACK_INIT))
+		{
+			status = STATUS_UNSUCCESSFUL;
+			break;
+		}
+		if (Irp->AssociatedIrp.SystemBuffer == NULL)
+		{
+			status = STATUS_UNSUCCESSFUL;
+			break;
+		}
+		HawkIoctlUsermodeCallbackInit(Irp);
+		return STATUS_SUCCESS;
+	}
+
+	case IOCTL_USERMODE_CALLBACK_CALL6:
+	{
+		if (inputLength != sizeof(USERMODE_CALLBACK_CALL6) || outputLength != sizeof(USERMODE_CALLBACK_CALL6))
+		{
+			status = STATUS_UNSUCCESSFUL;
+			break;
+		}
+		if (Irp->AssociatedIrp.SystemBuffer == NULL)
+		{
+			status = STATUS_UNSUCCESSFUL;
+			break;
+		}
+		HawkIoctlUsermodeCallbackCall6(Irp);
 		return STATUS_SUCCESS;
 	}
 

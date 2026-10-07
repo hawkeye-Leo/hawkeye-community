@@ -378,6 +378,66 @@ static BOOLEAN LookupVaPte(
 static BOOLEAN GetKernelPagePhysicalAddress(
 	ULONG pid,
 	DWORD64 va,
+	PULONG64 physicalAddressOut);
+
+BOOLEAN HawkWriteCurrentProcessUserU64(ULONG64 UserVa, ULONG64 Value)
+{
+	KAPC_STATE apcState;
+	BOOLEAN ok = FALSE;
+
+	if (UserVa == 0 || UserVa > READ_PAGE_USER_VA_MAX)
+	{
+		return FALSE;
+	}
+
+	/*
+	 * Same-process user stack: use KeStackAttachProcess + direct store.
+	 * MmMapIoSpaceEx on stack RAM pages can fault (see !read user path below).
+	 * KVA shadow blocks kernel CR3 from touching user VA without attach.
+	 */
+	KeStackAttachProcess((PRKPROCESS)PsGetCurrentProcess(), &apcState);
+	__try
+	{
+		*(PULONG64)(ULONG_PTR)UserVa = Value;
+		ok = TRUE;
+	}
+	__except (EXCEPTION_EXECUTE_HANDLER)
+	{
+		ok = FALSE;
+	}
+	KeUnstackDetachProcess(&apcState);
+	return ok;
+}
+
+BOOLEAN HawkReadCurrentProcessUserU64(ULONG64 UserVa, PULONG64 ValueOut)
+{
+	KAPC_STATE apcState;
+	BOOLEAN ok = FALSE;
+
+	if (UserVa == 0 || UserVa > READ_PAGE_USER_VA_MAX || ValueOut == NULL)
+	{
+		return FALSE;
+	}
+
+	*ValueOut = 0;
+
+	KeStackAttachProcess((PRKPROCESS)PsGetCurrentProcess(), &apcState);
+	__try
+	{
+		*ValueOut = *(PULONG64)(ULONG_PTR)UserVa;
+		ok = TRUE;
+	}
+	__except (EXCEPTION_EXECUTE_HANDLER)
+	{
+		ok = FALSE;
+	}
+	KeUnstackDetachProcess(&apcState);
+	return ok;
+}
+
+static BOOLEAN GetKernelPagePhysicalAddress(
+	ULONG pid,
+	DWORD64 va,
 	PULONG64 physicalAddressOut)
 {
 	DWORD64 entryData = 0;

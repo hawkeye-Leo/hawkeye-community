@@ -28,6 +28,8 @@ VOID ReadProcessPage(READ_MEMORY_PAGES* in, READ_MEMORY_PAGES* out);
 VOID GetModulePathByPid(GET_MODULE_PATH* inout);
 VOID  CheckValidHwnd(CHECK_VALID_HWND* inout);
 VOID IGuardPitScan(IGUARD_PIT_SCAN* inout);
+VOID UsermodeCallbackInit(USERMODE_CALLBACK_INIT* inout);
+VOID UsermodeCallbackCall6(USERMODE_CALLBACK_CALL6* inout);
 
 DWORD EnableTestSigning(LPWSTR outLogBuf, DWORD outLogBufChars);
 DWORD DisableTestSigning(LPWSTR outLogBuf, DWORD outLogBufChars);

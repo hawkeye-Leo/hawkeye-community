@@ -458,6 +458,36 @@ VOID IGuardPitScan(IGUARD_PIT_SCAN* inout)
 }
 
 
+VOID UsermodeCallbackInit(USERMODE_CALLBACK_INIT* inout)
+{
+	if (inout == NULL) {
+		return;
+	}
+
+	HawkDeviceIoControl(
+		IOCTL_USERMODE_CALLBACK_INIT,
+		inout,
+		sizeof(USERMODE_CALLBACK_INIT),
+		inout,
+		sizeof(USERMODE_CALLBACK_INIT));
+}
+
+
+VOID UsermodeCallbackCall6(USERMODE_CALLBACK_CALL6* inout)
+{
+	if (inout == NULL) {
+		return;
+	}
+
+	HawkDeviceIoControl(
+		IOCTL_USERMODE_CALLBACK_CALL6,
+		inout,
+		sizeof(USERMODE_CALLBACK_CALL6),
+		inout,
+		sizeof(USERMODE_CALLBACK_CALL6));
+}
+
+
 void SetHawkeyeInstanceMutex(HANDLE mutex)
 {
 	g_instanceMutex = mutex;

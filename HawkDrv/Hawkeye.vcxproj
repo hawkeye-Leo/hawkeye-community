@@ -41,8 +41,11 @@
     <ClCompile Include="memory.c" />
     <ClCompile Include="module.c" />
     <ClCompile Include="process.c" />
+    <ClCompile Include="usermode_callback.c" />
+    <ClCompile Include="draw_test_gdi.c" />
     <ResourceCompile Include="hawk.rc" />
     <ClCompile Include="HawkMain.c" />
+    <MASM Include="user_call.asm" />
     <Inf Include="Hawkeye.inf" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
@@ -277,6 +280,7 @@ copy /y "$(TargetPath)" "$(ProjectDir)..\bin\Hawkeye.sys"</Command>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\common.h" />
+    <ClInclude Include="hawk_kernel_thread.h" />
     <ClInclude Include="feature.h" />
     <ClInclude Include="hook.h" />
     <ClInclude Include="hwnd.h" />
@@ -284,6 +288,7 @@ copy /y "$(TargetPath)" "$(ProjectDir)..\bin\Hawkeye.sys"</Command>
     <ClInclude Include="memory.h" />
     <ClInclude Include="module.h" />
     <ClInclude Include="process.h" />
+    <ClInclude Include="usermode_callback.h" />
     <ClInclude Include="utils.h" />
   </ItemGroup>
   <ItemGroup>

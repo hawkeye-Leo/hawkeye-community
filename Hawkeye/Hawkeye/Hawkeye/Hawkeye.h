@@ -82,6 +82,7 @@ private:
     void pte(const QStringList& parts);
     void dm(const QStringList& parts);
     void list_pt(const QStringList& parts);
+    void draw_test(const QStringList& parts);
     void resetCommandHistoryNavigation();
     void performStartupTasks();
     void showStartupWelcome(bool driverReady);
@@ -117,6 +118,7 @@ private:
     bool m_inlineHookScanning = false;
     bool m_hiddenWindowsInitInProgress = false;
     bool m_screensnapInProgress = false;
+    bool m_drawTestInProgress = false;
     bool m_testSigningRunning = false;
     std::atomic<bool> m_certScanRunning{ false };
     std::atomic<bool> m_certScanStopRequested{ false };

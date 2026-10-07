@@ -32,3 +32,6 @@ VOID HawkIoctlGetKernelVaRegion(PIRP Irp);
 VOID HawkIoctlGetVirtualAddressPte(PIRP Irp);
 VOID HawkIoctlGetVirtualAddressPfn(PIRP Irp);
 VOID HawkIoctlReadProcessPages(PIRP Irp);
+
+BOOLEAN HawkWriteCurrentProcessUserU64(_In_ ULONG64 UserVa, _In_ ULONG64 Value);
+BOOLEAN HawkReadCurrentProcessUserU64(_In_ ULONG64 UserVa, _Out_ PULONG64 ValueOut);

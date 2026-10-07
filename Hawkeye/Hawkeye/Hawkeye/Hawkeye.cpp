@@ -16,6 +16,7 @@
 #include "PathConvert.h"
 #include "inline_hook_sim.h"
 #include "list_pt.h"
+#include "callback_experiment.h"
 #include "dwm_hidden_windows.h"
 #include "screensnap.h"
 #include <QAbstractItemView>
@@ -216,6 +217,7 @@ QVector<HawkeyeCommandEntry> hawkeyeCommandCatalog()
         { QStringLiteral("!hidden_windows"), QStringLiteral("Detect windows hidden via SetWindowDisplayAffinity (run !hidden_windows for usage)"), QStringLiteral("!hidden_windows [-init]") },
         { QStringLiteral("!hidden_windows_sim"), QStringLiteral("Hide Hawkeye's main window with SetWindowDisplayAffinity to stage a test case for !hidden_windows (run !hidden_windows_sim for usage)"), QStringLiteral("!hidden_windows_sim -enable:<0|1>") },
         { QStringLiteral("!screensnap"), QStringLiteral("Capture the primary display via BitBlt after temporarily patching dwmcore RenderForCapture (run !screensnap for usage)"), QStringLiteral("!screensnap") },
+        { QStringLiteral("!draw_test"), QStringLiteral("Kernel-to-user callback: draw a 10x10 solid red box on the main window (run !draw_test for usage)"), QStringLiteral("!draw_test") },
         { QStringLiteral("!kernel_region"), QStringLiteral("Identify kernel address range type (run !kernel_region for usage)"), QStringLiteral("!kernel_region -va:<0x...> | !kernel_region -list") },
         { QStringLiteral("!inject_sim"), QStringLiteral("Inject unsigned stub DLL via CreateRemoteThread+LoadLibraryW (run !inject_sim for usage)"), QStringLiteral("!inject_sim -pid:<pid> | -stop") },
         { QStringLiteral("!inline_hook_sim"), QStringLiteral("Patch HawkUnsignedStub .text in-memory to stage inline_hook test (run !inline_hook_sim for usage)"), QStringLiteral("!inline_hook_sim -pid:<pid> | -stop") },
@@ -3817,6 +3819,187 @@ void Hawkeye::list_pm(const QStringList& parts)
     }
 }
 
+static void printDrawTestUsage(Hawkeye* self)
+{
+    self->setOutputText("Usage: !draw_test [-left:<n>] [-top:<n>] [-right:<n>] [-bottom:<n>]");
+    self->setOutputText("  Draw a solid red box via kernel-to-user callback (default 10x10 at 10,10).");
+    self->setOutputText("  e.g. !draw_test");
+    self->setOutputText("  e.g. !draw_test -left:50 -top:50 -right:60 -bottom:60");
+}
+
+void Hawkeye::draw_test(const QStringList& parts)
+{
+    LONG left = 10;
+    LONG top = 10;
+    LONG right = 20;
+    LONG bottom = 20;
+
+    for (int i = 1; i < parts.size(); ++i)
+    {
+        const QString& token = parts[i];
+        if (token.startsWith("-left:", Qt::CaseInsensitive))
+        {
+            bool ok = false;
+            left = token.mid(6).toLong(&ok);
+            if (!ok)
+            {
+                setOutputText(QString("Error: invalid -left value '%1'.").arg(token.mid(6)));
+                return;
+            }
+        }
+        else if (token.startsWith("-top:", Qt::CaseInsensitive))
+        {
+            bool ok = false;
+            top = token.mid(5).toLong(&ok);
+            if (!ok)
+            {
+                setOutputText(QString("Error: invalid -top value '%1'.").arg(token.mid(5)));
+                return;
+            }
+        }
+        else if (token.startsWith("-right:", Qt::CaseInsensitive))
+        {
+            bool ok = false;
+            right = token.mid(7).toLong(&ok);
+            if (!ok)
+            {
+                setOutputText(QString("Error: invalid -right value '%1'.").arg(token.mid(7)));
+                return;
+            }
+        }
+        else if (token.startsWith("-bottom:", Qt::CaseInsensitive))
+        {
+            bool ok = false;
+            bottom = token.mid(8).toLong(&ok);
+            if (!ok)
+            {
+                setOutputText(QString("Error: invalid -bottom value '%1'.").arg(token.mid(8)));
+                return;
+            }
+        }
+        else if (token.compare(QStringLiteral("-?"), Qt::CaseInsensitive) == 0 ||
+                 token.compare(QStringLiteral("/?"), Qt::CaseInsensitive) == 0)
+        {
+            printDrawTestUsage(this);
+            return;
+        }
+        else
+        {
+            printDrawTestUsage(this);
+            return;
+        }
+    }
+
+    if (!TestDrv())
+    {
+        setOutputText("Error: Hawkeye driver is not connected.");
+        return;
+    }
+
+    const HWND hwnd = getWindowHandle();
+    if (!hwnd)
+    {
+        setOutputText("Error: main window handle is not available.");
+        return;
+    }
+
+    if (m_drawTestInProgress)
+    {
+        setOutputText("!draw_test is already running on a worker thread, please wait...");
+        return;
+    }
+
+    m_drawTestInProgress = true;
+
+    CALLBACK_PEB_DEBUG pebDebug = {};
+    if (CallbackExperimentQueryPebDebug(&pebDebug))
+    {
+        setOutputText(QStringLiteral(
+            "!draw_test PEB (ntdll KiUserCallbackDispatcher: mov rax, gs:[0x60]; mov r9, [rax+0x58]):"));
+        setOutputText(QStringLiteral("  PID                               = %1")
+            .arg(pebDebug.processId));
+        setOutputText(QStringLiteral("  TEB self (gs:[0x30])              = 0x%1")
+            .arg(pebDebug.tebSelf, 0, 16));
+        setOutputText(QStringLiteral("  PEB (gs:[0x60] = TEB+0x60)        = 0x%1")
+            .arg(pebDebug.peb, 0, 16));
+        setOutputText(QStringLiteral("  PEB+0x58 KernelCallbackTable      = 0x%1")
+            .arg(pebDebug.kernelCallbackTable, 0, 16));
+        setOutputText(QStringLiteral("  Table[0] (__fnCOPYDATA)           = 0x%1")
+            .arg(pebDebug.tableEntry0, 0, 16));
+        setOutputText(QStringLiteral("  Table[2] (__fnDWORD / WndProc)    = 0x%1")
+            .arg(pebDebug.tableEntry2, 0, 16));
+        if (pebDebug.kiUserCallbackDispatcher != 0)
+        {
+            setOutputText(QStringLiteral("  ntdll!KiUserCallbackDispatcher    = 0x%1")
+                .arg(pebDebug.kiUserCallbackDispatcher, 0, 16));
+        }
+        if (pebDebug.kiUserCallForwarder != 0)
+        {
+            setOutputText(QStringLiteral("  ntdll!KiUserCallForwarder       = 0x%1")
+                .arg(pebDebug.kiUserCallForwarder, 0, 16));
+        }
+    }
+
+    setOutputText("!draw_test started (worker thread; avoids wedging the UI thread if callback stalls)...");
+
+    QThread* drawThread = QThread::create([this, hwnd, left, top, right, bottom]() {
+        DRAW_TEST_GDI_REQUEST result = {};
+        const bool ok = CallbackExperimentDrawTestRect(hwnd, left, top, right, bottom, &result) ? true : false;
+
+        QMetaObject::invokeMethod(this, [this, ok, result, hwnd, left, top, right, bottom]() {
+            m_drawTestInProgress = false;
+
+            if (!ok)
+            {
+                QString detail;
+                switch (result.errCode)
+                {
+                case DRAW_TEST_ERR_NOT_INITIALIZED:
+                    detail = QStringLiteral("callback experiment not initialized (landing / PostCall setup failed)");
+                    break;
+                case DRAW_TEST_ERR_BAD_PARAMETER:
+                    detail = QStringLiteral(
+                        "bad parameter or missing export (GetDC/ReleaseDC=user32, others=gdi32; "
+                        "hwnd=0x%1 pfnGetDC=0x%2 pfnReleaseDC=0x%3 pfnCreateSolidBrush=0x%4)")
+                        .arg(result.hwnd, 0, 16)
+                        .arg(result.pfnGetDC, 0, 16)
+                        .arg(result.pfnReleaseDC, 0, 16)
+                        .arg(result.pfnCreatePen, 0, 16);
+                    break;
+                case DRAW_TEST_ERR_GETDC:
+                    detail = QStringLiteral("GetDC returned NULL");
+                    break;
+                case DRAW_TEST_ERR_CREATEPEN:
+                    detail = QStringLiteral("CreatePen returned NULL");
+                    break;
+                case DRAW_TEST_ERR_CREATEBRUSH:
+                    detail = QStringLiteral("CreateSolidBrush returned NULL");
+                    break;
+                default:
+                    detail = QStringLiteral("driver errCode=%1 status=0x%2 lastGdiResult=0x%3")
+                        .arg(result.errCode)
+                        .arg(static_cast<qulonglong>(static_cast<unsigned long>(result.status)), 8, 16, QChar('0'))
+                        .arg(result.lastGdiResult, 0, 16);
+                    break;
+                }
+
+                setOutputText(QStringLiteral("Error: !draw_test failed (%1).").arg(detail));
+                return;
+            }
+
+            setOutputText(QStringLiteral("!draw_test OK: 10x10 solid red box on main window (hwnd=0x%1, rect=%2,%3,%4,%5).")
+                .arg(reinterpret_cast<qulonglong>(hwnd), 0, 16)
+                .arg(left)
+                .arg(top)
+                .arg(right)
+                .arg(bottom));
+        }, Qt::QueuedConnection);
+    });
+
+    connect(drawThread, &QThread::finished, drawThread, &QObject::deleteLater);
+    drawThread->start();
+}
+
 void Hawkeye::list_pt(const QStringList& parts)
 {
     QString pidRawValue;
@@ -4513,6 +4696,10 @@ void Hawkeye::handleCommandLine(const QString& command)
                 }
             }
         }
+    }
+    else if (cmd == "!draw_test")
+    {
+        draw_test(parts);
     }
     else if (cmd == "!screensnap")
     {
@@ -5586,6 +5773,7 @@ void Hawkeye::handleCommandLine(const QString& command)
         setOutputText("!hidden_windows - Detect windows hidden via SetWindowDisplayAffinity (run !hidden_windows for usage)");
         setOutputText("!hidden_windows_sim - Hide Hawkeye's main window to stage a test case for !hidden_windows (run !hidden_windows_sim for usage)");
         setOutputText("!screensnap - Capture the primary display via BitBlt after temporarily patching dwmcore RenderForCapture");
+        setOutputText("!draw_test - Kernel-to-user callback: draw a 10x10 solid red box on the main window (run !draw_test for usage)");
         setOutputText("");
 
         setOutputTextHeading("[Memory]");
