@@ -409,6 +409,39 @@ VOID  OpenProcessHandle(OPEN_PROCESS_HANDLE* inout)
 		sizeof(OPEN_PROCESS_HANDLE));
 }
 
+bool EtwTiSetProcessPpl(DWORD pid, bool enable)
+{
+	ETW_TI_PPL_REQUEST request = {};
+	request.pid = pid;
+	request.enable = enable ? 1 : 0;
+	return HawkDeviceIoControl(
+		IOCTL_ETW_TI_SET_PPL,
+		&request,
+		sizeof(request),
+		NULL,
+		0) != FALSE;
+}
+
+HANDLE OpenProcessForQuery(DWORD pid)
+{
+	OPEN_PROCESS_HANDLE inout = {};
+
+	if (pid == 0 || pid == 4)
+	{
+		return NULL;
+	}
+
+	inout.pid = pid;
+	inout.desiredAccess = PROCESS_QUERY_INFORMATION | PROCESS_VM_READ;
+	OpenProcessHandle(&inout);
+	if (inout.errCode != 1 || inout.processHandle == 0)
+	{
+		return NULL;
+	}
+
+	return reinterpret_cast<HANDLE>(static_cast<ULONG_PTR>(inout.processHandle));
+}
+
 
 VOID  ReadProcessPage(READ_MEMORY_PAGES* in, READ_MEMORY_PAGES* out)
 {

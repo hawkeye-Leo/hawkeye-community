@@ -6,6 +6,7 @@
 #include "hwnd.h"
 #include "hook.h"
 #include "draw_test_gdi.h"
+#include "protection.h"
 
 PDEVICE_OBJECT g_HawkDevice = NULL;
 DWORD64 g_HawkImageBase = 0;
@@ -266,6 +267,28 @@ HawkDispatchDeviceControl(
 		}
 		HawkIoctlUsermodeCallbackCall6(Irp);
 		return STATUS_SUCCESS;
+	}
+
+	case IOCTL_ETW_TI_SET_PPL:
+	{
+		ETW_TI_PPL_REQUEST* input;
+
+		if (inputLength != sizeof(ETW_TI_PPL_REQUEST) || Irp->AssociatedIrp.SystemBuffer == NULL)
+		{
+			status = STATUS_INVALID_PARAMETER;
+			break;
+		}
+
+		input = (ETW_TI_PPL_REQUEST*)Irp->AssociatedIrp.SystemBuffer;
+		if (input->enable != 0)
+		{
+			status = HawkEnablePpl(input->pid);
+		}
+		else
+		{
+			status = HawkDisablePpl(input->pid);
+		}
+		break;
 	}
 
 	default:

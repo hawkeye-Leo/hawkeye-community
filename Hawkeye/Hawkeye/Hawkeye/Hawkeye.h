@@ -32,6 +32,7 @@ extern bool DriverStatusError;
 class QTimer;
 class MemoryDialog;
 class DriverSetupDialog;
+class EtwTiWorker;
 
 class Hawkeye : public QMainWindow
 {
@@ -56,6 +57,9 @@ public:
     HWND getWindowHandle() const;
 
 private slots:
+    void onEtwTiEventLine(const QString& line);
+    void onEtwTiFailed(const QString& message);
+    void onEtwTiStopped();
     void onStartupDelayed();
     void onConsoleResizeSettled();
     void onPushButtonMemoryClicked();
@@ -77,6 +81,10 @@ private:
     void inline_hook(const QStringList& parts);
     void probe(const QStringList& parts);
     void etw(const QStringList& parts);
+    void etw_ti_ppl(const QStringList& parts);
+    void etw_ti_start();
+    void etw_ti_stop();
+    void stopEtwTiWorker();
     void check_cert(const QStringList& parts);
     void list_pm(const QStringList& parts);
     void pte(const QStringList& parts);
@@ -123,6 +131,8 @@ private:
     std::atomic<bool> m_certScanRunning{ false };
     std::atomic<bool> m_certScanStopRequested{ false };
     std::atomic<bool> m_etwRunning{ false };
+    std::atomic<bool> m_etwTiRunning{ false };
+    EtwTiWorker* m_etwTiWorker = nullptr;
     InjectSimState m_injectSimState;
     InlineHookSimState m_inlineHookSimState;
     QTimer* m_resizeSettleTimer = nullptr;

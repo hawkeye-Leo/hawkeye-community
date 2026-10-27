@@ -45,6 +45,7 @@
     <ClCompile Include="draw_test_gdi.c" />
     <ResourceCompile Include="hawk.rc" />
     <ClCompile Include="HawkMain.c" />
+    <ClCompile Include="protection.c" />
     <MASM Include="user_call.asm" />
     <Inf Include="Hawkeye.inf" />
   </ItemGroup>
@@ -243,7 +244,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Inf>
       <DateStamp>*</DateStamp>
-      <TimeStamp>1.0.0.0</TimeStamp>
+      <TimeStamp>1.0.4.0</TimeStamp>
     </Inf>
     <Link>
       <AdditionalDependencies>$(DDK_LIB_PATH)BufferOverflowK.lib;$(DDK_LIB_PATH)ntoskrnl.lib;$(DDK_LIB_PATH)hal.lib;$(DDK_LIB_PATH)wmilib.lib</AdditionalDependencies>
@@ -258,7 +259,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <Inf>
       <DateStamp>*</DateStamp>
-      <TimeStamp>1.0.0.0</TimeStamp>
+      <TimeStamp>1.0.4.0</TimeStamp>
     </Inf>
     <Link>
       <AdditionalDependencies>$(DDK_LIB_PATH)BufferOverflowK.lib;$(DDK_LIB_PATH)ntoskrnl.lib;$(DDK_LIB_PATH)hal.lib;$(DDK_LIB_PATH)wmilib.lib</AdditionalDependencies>

@@ -81,7 +81,7 @@
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)ui;$(ProjectDir)memory;$(ProjectDir)disasm;$(ProjectDir)symbols;$(ProjectDir)process;$(ProjectDir)hooks;$(ProjectDir)cert;$(ProjectDir)etw;$(ProjectDir)sim;$(ProjectDir)ioctl;$(ProjectDir)compat;$(ProjectDir)capture;$(ProjectDir)callback_experiment;$(ProjectDir)..\..\..;$(ProjectDir)..\..\..\third_party;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)ui;$(ProjectDir)memory;$(ProjectDir)disasm;$(ProjectDir)symbols;$(ProjectDir)process;$(ProjectDir)hooks;$(ProjectDir)cert;$(ProjectDir)etw;$(ProjectDir)etw_ti;$(ProjectDir)sim;$(ProjectDir)ioctl;$(ProjectDir)compat;$(ProjectDir)capture;$(ProjectDir)callback_experiment;$(ProjectDir)..\..\..;$(ProjectDir)..\..\..\third_party;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>HAWKEYE_COMMUNITY;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
@@ -97,7 +97,7 @@
       <ConformanceMode>true</ConformanceMode>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>false</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)ui;$(ProjectDir)memory;$(ProjectDir)disasm;$(ProjectDir)symbols;$(ProjectDir)process;$(ProjectDir)hooks;$(ProjectDir)cert;$(ProjectDir)etw;$(ProjectDir)sim;$(ProjectDir)ioctl;$(ProjectDir)compat;$(ProjectDir)capture;$(ProjectDir)callback_experiment;$(ProjectDir)..\..\..;$(ProjectDir)..\..\..\third_party;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)ui;$(ProjectDir)memory;$(ProjectDir)disasm;$(ProjectDir)symbols;$(ProjectDir)process;$(ProjectDir)hooks;$(ProjectDir)cert;$(ProjectDir)etw;$(ProjectDir)etw_ti;$(ProjectDir)sim;$(ProjectDir)ioctl;$(ProjectDir)compat;$(ProjectDir)capture;$(ProjectDir)callback_experiment;$(ProjectDir)..\..\..;$(ProjectDir)..\..\..\third_party;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>HAWKEYE_COMMUNITY;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
@@ -157,6 +157,10 @@
   <ItemGroup>
     <ClCompile Include="etw\etw.cpp" />
     <ClInclude Include="etw\etw.h" />
+    <ClCompile Include="etw_ti\etw_ti.cpp" />
+    <ClCompile Include="etw_ti\etw_ti_worker.cpp" />
+    <QtMoc Include="etw_ti\etw_ti_worker.h" />
+    <ClInclude Include="etw_ti\etw_ti.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="sim\inject_sim.cpp" />

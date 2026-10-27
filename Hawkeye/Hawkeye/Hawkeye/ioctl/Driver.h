@@ -24,6 +24,8 @@ VOID GetKernelVaRegion(KERNEL_VA_REGION* in, KERNEL_VA_REGION* out);
 VOID  GetVirtualAddressPte(GET_VIRTUAL_ADDRESS_PTE* inout);
 VOID GetVirtualAddressPfn(GET_VIRTUAL_ADDRESS_PFN* inout);
 VOID OpenProcessHandle(OPEN_PROCESS_HANDLE* inout);
+bool EtwTiSetProcessPpl(DWORD pid, bool enable);
+HANDLE OpenProcessForQuery(DWORD pid);
 VOID ReadProcessPage(READ_MEMORY_PAGES* in, READ_MEMORY_PAGES* out);
 VOID GetModulePathByPid(GET_MODULE_PATH* inout);
 VOID  CheckValidHwnd(CHECK_VALID_HWND* inout);

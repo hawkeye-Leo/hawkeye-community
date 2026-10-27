@@ -13,6 +13,8 @@
 #include "hook.h"
 #include "Driver.h"
 #include "etw.h"
+#include "etw_ti.h"
+#include "etw_ti_worker.h"
 #include "PathConvert.h"
 #include "inline_hook_sim.h"
 #include "list_pt.h"
@@ -225,6 +227,9 @@ QVector<HawkeyeCommandEntry> hawkeyeCommandCatalog()
         { QStringLiteral("!dump"), QStringLiteral("Memory page dump to .\\DumpPages (run !dump for usage)"), QStringLiteral("!dump -pid:<pid> -va:<0x...> -pages:<n> -method:<0|2|name>") },
         { QStringLiteral("!pfn"), QStringLiteral("Inspect physical-frame info for an address (run !pfn for usage)"), QStringLiteral("!pfn -pid:<pid> -va:<0x...>") },
         { QStringLiteral("!etw"), QStringLiteral("Live CPU sampling on a process, a thread, or the whole system (run !etw for usage)"), QStringLiteral("!etw -pid:<pid> | -tid:<tid> | -all [options]") },
+        { QStringLiteral("!etw_ti_ppl"), QStringLiteral("Enable or disable Antimalware PPL for ETW Threat Intelligence (run !etw_ti_ppl for usage)"), QStringLiteral("!etw_ti_ppl -enable:<0|1> [-pid:<pid>]") },
+        { QStringLiteral("!etw_ti_start"), QStringLiteral("Start live ETW Threat Intelligence trace (requires PPL; run !etw_ti_start)"), QStringLiteral("!etw_ti_start") },
+        { QStringLiteral("!etw_ti_stop"), QStringLiteral("Stop ETW Threat Intelligence trace"), QStringLiteral("!etw_ti_stop") },
         { QStringLiteral("!threads"), QStringLiteral("List threads and Win32 start addresses (OEP) for a process (run !threads for usage)"), QStringLiteral("!threads -pid:<pid>") },
         { QStringLiteral("!sym"), QStringLiteral("Download, load, unload, resolve, and list symbol files (run !sym for usage)"), QStringLiteral("!sym -download|-load|-unload -path:<file> ... | !sym -resolve -addr:<0x...> | !sym -list") },
         { QStringLiteral("!probe"), QStringLiteral("Live symbol context on a chosen process or the kernel, for joint analysis against runtime data (run !probe for usage)"), QStringLiteral("!probe -pid:<pid> | -find:<kw> [-mod:...] | -sym:<name> | -status|-stop|-detach") },
@@ -252,6 +257,8 @@ bool isMemoryIntegritySafeCommand(const QString& cmd)
         QStringLiteral("!sym"),
         QStringLiteral("!probe"),
         QStringLiteral("!etw"),
+        QStringLiteral("!etw_ti_start"),
+        QStringLiteral("!etw_ti_stop"),
         QStringLiteral("!search"),
         QStringLiteral("cls"),
         QStringLiteral("!process"),
@@ -1207,6 +1214,8 @@ Hawkeye::Hawkeye(QWidget *parent)
 
 Hawkeye::~Hawkeye()
 {
+    stopEtwTiWorker();
+
     if (m_memoryDialog) {
         disconnect(m_memoryDialog, nullptr, this, nullptr);
         delete m_memoryDialog;
@@ -3550,6 +3559,145 @@ void Hawkeye::etw(const QStringList& parts)
     etwThread->start();
 }
 
+void Hawkeye::stopEtwTiWorker()
+{
+    if (m_etwTiWorker == nullptr) {
+        return;
+    }
+
+    m_etwTiWorker->requestStop();
+    m_etwTiWorker->wait(5000);
+    disconnect(m_etwTiWorker, nullptr, this, nullptr);
+    delete m_etwTiWorker;
+    m_etwTiWorker = nullptr;
+    m_etwTiRunning.store(false);
+}
+
+void Hawkeye::onEtwTiEventLine(const QString& line)
+{
+    setOutputText(line.trimmed());
+}
+
+void Hawkeye::onEtwTiFailed(const QString& message)
+{
+    setOutputTextColored(message, QColor("#B71C1C"));
+    stopEtwTiWorker();
+}
+
+void Hawkeye::onEtwTiStopped()
+{
+    setOutputText(QStringLiteral("ETW-TI trace stopped."));
+    stopEtwTiWorker();
+}
+
+void Hawkeye::etw_ti_ppl(const QStringList& parts)
+{
+    bool hasEnableFlag = false;
+    QString enableRawValue;
+    bool hasPidFlag = false;
+    QString pidRawValue;
+
+    for (int i = 1; i < parts.size(); ++i)
+    {
+        const QString& arg = parts[i];
+        if (arg.startsWith(QStringLiteral("-enable:"), Qt::CaseInsensitive))
+        {
+            hasEnableFlag = true;
+            enableRawValue = arg.mid(8);
+        }
+        else if (arg.startsWith(QStringLiteral("-pid:"), Qt::CaseInsensitive))
+        {
+            hasPidFlag = true;
+            pidRawValue = arg.mid(5);
+        }
+    }
+
+    if (!hasEnableFlag)
+    {
+        setOutputText(QStringLiteral("Usage: !etw_ti_ppl -enable:<0|1> [-pid:<pid>]"));
+        setOutputText(QStringLiteral("  Enable or disable Antimalware PPL on a process (required for ETW-TI)."));
+        setOutputText(QStringLiteral("  Default -pid is the current Hawkeye process."));
+        setOutputText(QStringLiteral("  e.g. !etw_ti_ppl -enable:1"));
+        setOutputText(QStringLiteral("  e.g. !etw_ti_ppl -enable:0 -pid:1234"));
+        return;
+    }
+
+    if (enableRawValue != QStringLiteral("0") && enableRawValue != QStringLiteral("1"))
+    {
+        setOutputText(QString("Error: -enable value '%1' is not valid. Only 0 or 1 is allowed.").arg(enableRawValue));
+        return;
+    }
+
+    DWORD targetPid = GetCurrentProcessId();
+    if (hasPidFlag)
+    {
+        bool pidOk = false;
+        const quint32 parsedPid = pidRawValue.toUInt(&pidOk);
+        if (!pidOk || parsedPid == 0)
+        {
+            setOutputText(QString("Error: -pid value '%1' is not a valid positive integer.").arg(pidRawValue));
+            return;
+        }
+        targetPid = parsedPid;
+    }
+
+    if (DriverStatusError)
+    {
+        setOutputTextColored(QStringLiteral("Driver is not ready."), QColor("#B71C1C"));
+        return;
+    }
+
+    const bool enablePpl = (enableRawValue == QStringLiteral("1"));
+    if (EtwTiSetProcessPpl(targetPid, enablePpl))
+    {
+        setOutputText(QStringLiteral("PPL %1 pid=%2.")
+            .arg(enablePpl ? QStringLiteral("enabled") : QStringLiteral("disabled"))
+            .arg(targetPid));
+        setOutputText(EtwTiDescribeProcessProtection());
+    }
+    else
+    {
+        setOutputTextColored(
+            QStringLiteral("PPL %1 failed for pid=%2 (%3).")
+                .arg(enablePpl ? QStringLiteral("enable") : QStringLiteral("disable"))
+                .arg(targetPid)
+                .arg(GetLastError()),
+            QColor("#B71C1C"));
+    }
+}
+
+void Hawkeye::etw_ti_start()
+{
+    if (m_etwTiWorker != nullptr && m_etwTiWorker->isRunning())
+    {
+        setOutputText(QStringLiteral("ETW-TI trace is already running."));
+        return;
+    }
+
+    stopEtwTiWorker();
+    setOutputText(QStringLiteral("Starting ETW Threat Intelligence trace..."));
+    setOutputText(EtwTiDescribeProcessProtection());
+
+    m_etwTiRunning.store(true);
+    m_etwTiWorker = new EtwTiWorker(this);
+    connect(m_etwTiWorker, &EtwTiWorker::eventLineReady, this, &Hawkeye::onEtwTiEventLine);
+    connect(m_etwTiWorker, &EtwTiWorker::traceFailed, this, &Hawkeye::onEtwTiFailed);
+    connect(m_etwTiWorker, &EtwTiWorker::traceStopped, this, &Hawkeye::onEtwTiStopped);
+    m_etwTiWorker->start();
+}
+
+void Hawkeye::etw_ti_stop()
+{
+    if (m_etwTiWorker == nullptr || !m_etwTiWorker->isRunning())
+    {
+        setOutputText(QStringLiteral("ETW-TI trace is not running."));
+        return;
+    }
+
+    stopEtwTiWorker();
+    setOutputText(QStringLiteral("ETW-TI trace stop requested."));
+}
+
 void Hawkeye::check_cert(const QStringList& parts)
 {
     
@@ -5269,6 +5417,34 @@ void Hawkeye::handleCommandLine(const QString& command)
     {
         etw(parts);
     }
+    else if (cmd == "!etw_ti_ppl")
+    {
+        etw_ti_ppl(parts);
+    }
+    else if (cmd == "!etw_ti_start")
+    {
+        if (parts.size() > 1)
+        {
+            setOutputText(QStringLiteral("Usage: !etw_ti_start"));
+            setOutputText(QStringLiteral("  Start live Microsoft-Windows-Threat-Intelligence ETW trace."));
+            setOutputText(QStringLiteral("  Enable PPL first: !etw_ti_ppl -enable:1"));
+        }
+        else
+        {
+            etw_ti_start();
+        }
+    }
+    else if (cmd == "!etw_ti_stop")
+    {
+        if (parts.size() > 1)
+        {
+            setOutputText(QStringLiteral("Usage: !etw_ti_stop"));
+        }
+        else
+        {
+            etw_ti_stop();
+        }
+    }
     else if (cmd == "!sym")
     {
         bool downloadRequested = false;
@@ -5786,6 +5962,9 @@ void Hawkeye::handleCommandLine(const QString& command)
         setOutputTextHeading("[Analysis]");
         setOutputText("!probe - Live symbol context on a chosen process or the kernel, for joint analysis against runtime data (run !probe for usage)");
         setOutputText("!etw - Live CPU sampling on a process, a thread, or the whole system (run !etw for usage)");
+        setOutputText("!etw_ti_ppl - Enable or disable Antimalware PPL for ETW Threat Intelligence (run !etw_ti_ppl for usage)");
+        setOutputText("!etw_ti_start - Start live ETW Threat Intelligence trace (requires PPL)");
+        setOutputText("!etw_ti_stop - Stop ETW Threat Intelligence trace");
         setOutputText("");
 
         setOutputTextHeading("[Symbols]");
@@ -5869,6 +6048,8 @@ void Hawkeye::closeEvent(QCloseEvent* closeEv)
     if (m_probeSession.IsAttached()) {
         m_probeSession.Detach(m_symbolManager, ProbeLogFn{});
     }
+
+    stopEtwTiWorker();
 
     UninstallHawkDrv();
 
